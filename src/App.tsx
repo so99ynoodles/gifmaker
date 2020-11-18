@@ -1,10 +1,27 @@
-import React, { useMemo, useState } from 'react';
+import { ArrowRightIcon, ArrowUpIcon, DownloadIcon } from '@chakra-ui/icons';
+import {
+  Box,
+  Container,
+  NumberDecrementStepper,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  Spinner,
+  FormControl,
+  FormLabel,
+  Text,
+  Button,
+  Image,
+  NumberIncrementStepper,
+  IconButton,
+} from '@chakra-ui/react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useConvertToGif } from './hooks/useConvertToGif';
-import './App.css';
 
 interface AppProps {}
 
-function App({}: AppProps) {
+function App({}: AppProps): JSX.Element {
+  const uploadRef = useRef<HTMLInputElement>(null);
   const [video, setVideo] = useState<File | null>();
   const videoUrl = useMemo(() => (video ? URL.createObjectURL(video) : null), [
     video,
@@ -13,60 +30,132 @@ function App({}: AppProps) {
   const [gif, setGif] = useState<string>();
   const [startTime, setStartTime] = useState<string>('2.0');
   const [totalTime, setTotalTime] = useState<string>('2.5');
-  const { ready, convertToGif } = useConvertToGif();
+  const { ready, convertToGif, converting } = useConvertToGif();
 
   async function handleConvert() {
     const url = await convertToGif(video!, totalTime, startTime);
     setGif(url);
   }
 
+  function onDownload() {
+    let link = document.createElement('a');
+    link.href = gif!;
+    link.download = `${video?.name.split('.')?.[0] || 'download'}.gif`;
+    link.click();
+  }
+
+  async function clickUpload(
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) {
+    e.preventDefault();
+    if (uploadRef.current) uploadRef.current?.click();
+  }
+
   return ready ? (
-    <div className="App">
-      <div className="App__Media">
-        {video && (
-          <video
-            className="App__Media__Video"
-            controls
-            width="300"
-            src={videoUrl!}
-          />
+    <Container padding="32px">
+      <Box mb="16px">
+        {video ? (
+          <video controls src={videoUrl!} />
+        ) : (
+          <Text>Please upload a video to convert to Gif</Text>
         )}
-      </div>
-      <input
-        className="App__Input"
-        type="file"
-        onChange={(e) => setVideo(e.target.files?.item(0))}
-      />
+      </Box>
+      <Box mb="32px">
+        <input
+          ref={uploadRef}
+          hidden
+          type="file"
+          accept="video/*"
+          onChange={(e) => setVideo(e.target.files?.item(0))}
+        />
+        <Button
+          onClick={clickUpload}
+          mr="8px"
+          colorScheme="teal"
+          variant="outline"
+          aria-label="upload video"
+          leftIcon={<ArrowUpIcon />}
+        >
+          Upload
+        </Button>
+        <Button
+          rightIcon={<ArrowRightIcon />}
+          colorScheme="teal"
+          variant="solid"
+          disabled={!video}
+          onClick={handleConvert}
+        >
+          Convert
+        </Button>
+      </Box>
 
       {video && (
-        <div className="App__Controls">
-          <div>
-            <label>total time</label>
-            <input
-              type="number"
-              step="0.1"
+        <Box mb="32px">
+          <FormControl mb="16px">
+            <FormLabel mb="8px">Total Time</FormLabel>
+            <NumberInput
+              step={0.1}
+              min={1}
               value={totalTime}
-              onChange={(e) => setTotalTime(e.target.value)}
-            />
-          </div>
-          <div>
-            <label>start time</label>
-            <input
-              type="number"
-              step="0.1"
+              onChange={(value) => setTotalTime(value)}
+            >
+              <NumberInputField />
+              <NumberInputStepper>
+                <NumberIncrementStepper />
+                <NumberDecrementStepper />
+              </NumberInputStepper>
+            </NumberInput>
+          </FormControl>
+          <FormControl>
+            <FormLabel mb="8px">Start Time</FormLabel>
+            <NumberInput
+              step={0.1}
+              min={0}
               value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-            />
-          </div>
-        </div>
+              onChange={(value) => setStartTime(value)}
+            >
+              <NumberInputField />
+              <NumberInputStepper>
+                <NumberIncrementStepper />
+                <NumberDecrementStepper />
+              </NumberInputStepper>
+            </NumberInput>
+          </FormControl>
+        </Box>
       )}
 
-      <h3>Result</h3>
-      <button onClick={handleConvert}>Convert</button>
-      {gif && <img src={gif} alt="converted gif" />}
-    </div>
+      {converting && (
+        <Box display="flex" alignItems="center" justifyContent="center">
+          <Spinner colorScheme="teal" />
+        </Box>
+      )}
+
+      {!converting && gif && (
+        <Box position="relative">
+          <IconButton
+            cursor="pointer"
+            position="absolute"
+            colorScheme="teal"
+            aria-label="download gif"
+            icon={<DownloadIcon />}
+            top="8px"
+            right="8px"
+            onClick={onDownload}
+          />
+          <Image borderRadius="4px" src={gif} alt="converted gif" />
+        </Box>
+      )}
+    </Container>
   ) : (
-    <div>loading...</div>
+    <Container
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      centerContent
+      height="100vh"
+    >
+      <Spinner colorScheme="teal" size="xl" />
+    </Container>
   );
 }
 

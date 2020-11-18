@@ -7,8 +7,13 @@
     "lint": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
+    "@chakra-ui/icons": "^1.0.0",
+    "@chakra-ui/react": "^1.0.0",
+    "@emotion/react": "^11.1.1",
+    "@emotion/styled": "^11.0.0",
     "@ffmpeg/core": "^0.8.4",
     "@ffmpeg/ffmpeg": "^0.9.5",
+    "framer-motion": "^2.9.4",
     "react": "^17.0.0",
     "react-dom": "^17.0.0"
   },
